@@ -83,8 +83,17 @@ const uint16_t TetrominoManager::SHAPES[PIECE_COUNT][4] PROGMEM = {
 // CONSTRUCTOR
 // ============================================
 TetrominoManager::TetrominoManager() {
-  // Inisialisasi random seed dari noise analog
-  randomSeed(analogRead(A0));
+}
+
+// ============================================
+// BEGIN: Seed random number generator
+// ============================================
+// Tidak dilakukan di constructor karena objek global
+// dibuat sebelum core Arduino siap. Seed diambil dari
+// hardware RNG ESP8266 (lebih acak daripada noise A0).
+// ============================================
+void TetrominoManager::begin() {
+  randomSeed(ESP.random());
 }
 
 // ============================================
@@ -116,6 +125,12 @@ void TetrominoManager::getShape(const Tetromino& piece, uint8_t shape[4][4]) con
 // GET SHAPE: Ambil bentuk berdasarkan type & rotation
 // ============================================
 void TetrominoManager::getShape(TetrominoType type, uint8_t rotation, uint8_t shape[4][4]) const {
+  // Tolak type di luar tabel agar tidak membaca memory sembarang
+  if (type >= PIECE_COUNT) {
+    memset(shape, 0, sizeof(uint8_t) * 16);
+    return;
+  }
+  
   // Baca data dari PROGMEM (flash memory)
   uint16_t encoded = pgm_read_word(&SHAPES[type][rotation % 4]);
   decodeShape(encoded, shape);

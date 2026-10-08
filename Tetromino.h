@@ -53,6 +53,9 @@ class TetrominoManager {
 public:
   TetrominoManager();
 
+  /** Seed RNG (panggil dari setup, setelah core siap) */
+  void begin();
+
   /**
    * Spawn piece baru secara random di atas board.
    * Posisi awal: tengah atas board.

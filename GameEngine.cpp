@@ -38,6 +38,7 @@ GameEngine::GameEngine(MatrixDisplay& display)
 // BEGIN: Inisialisasi game
 // ============================================
 void GameEngine::begin() {
+  _tetroMgr.begin();
   resetGame();
   _state = STATE_IDLE;  // Mulai di mode idle, tunggu tombol START
   
