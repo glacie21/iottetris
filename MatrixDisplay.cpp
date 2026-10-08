@@ -27,7 +27,9 @@ uint8_t reverseBits8(uint8_t value) {
 // ============================================
 MatrixDisplay::MatrixDisplay()
   : _lc(PIN_DIN, PIN_CLK, PIN_CS, NUM_DEVICES),
-    _blinkState(false) {
+    _blinkState(false),
+    _frame{},
+    _frameValid(false) {
 }
 
 // ============================================
@@ -53,6 +55,8 @@ void MatrixDisplay::clear() {
   for (int i = 0; i < NUM_DEVICES; i++) {
     _lc.clearDisplay(i);
   }
+  memset(_frame, 0, sizeof(_frame));
+  _frameValid = true;
 }
 
 // ============================================
@@ -66,6 +70,9 @@ void MatrixDisplay::setPixel(uint8_t col, uint8_t row, bool state) {
   // Device 0 untuk single module
   uint8_t device = 0;
   _lc.setLed(device, row, col, state);
+  
+  // setLed memakai kolom hardware, jadi cache tidak lagi akurat
+  _frameValid = false;
 }
 
 // ============================================
@@ -79,6 +86,7 @@ void MatrixDisplay::setRow(uint8_t row, uint8_t value) {
   // Karena board game memakai bit 7 sebagai kolom kiri,
   // kita balik urutan bit sebelum dikirim ke hardware.
   _lc.setRow(0, row, reverseBits8(value));
+  _frame[row] = value;
 }
 
 // ============================================
@@ -90,8 +98,11 @@ void MatrixDisplay::render(const uint8_t* board) {
     // Karena board game memakai bit 7 = kolom paling kiri,
     // sementara hardware MAX7219 memakai bit 0 = kolom paling kiri,
     // maka perlu di-mirror dulu sebelum dikirim ke display.
+    // Lewati baris yang tidak berubah sejak render terakhir.
+    if (_frameValid && _frame[row] == board[row]) continue;
     setRow(row, board[row]);
   }
+  _frameValid = true;
 }
 
 // ============================================
@@ -103,7 +114,7 @@ void MatrixDisplay::blinkAll() {
   if (_blinkState) {
     // Nyalakan semua LED
     for (uint8_t row = 0; row < BOARD_HEIGHT; row++) {
-      _lc.setRow(0, row, 0xFF);
+      setRow(row, 0xFF);
     }
   } else {
     // Matikan semua LED
@@ -115,6 +126,8 @@ void MatrixDisplay::blinkAll() {
 // ANIMATE LINE CLEAR: Efek blink satu baris
 // ============================================
 void MatrixDisplay::animateLineClear(uint8_t row) {
+  if (row >= BOARD_HEIGHT) return;
+  
   // Efek: blink baris yang di-clear 3 kali
   for (uint8_t i = 0; i < 3; i++) {
     _lc.setRow(0, row, 0xFF);   // Nyalakan penuh
@@ -122,6 +135,9 @@ void MatrixDisplay::animateLineClear(uint8_t row) {
     _lc.setRow(0, row, 0x00);   // Matikan
     delay(80);
   }
+  
+  // Baris ini sekarang mati di hardware
+  _frame[row] = 0x00;
 }
 
 // ============================================

@@ -84,6 +84,11 @@ private:
      * ========================================= */
     LedControl _lc;      // Instance LedControl
     bool _blinkState;    // State animasi blink
+
+    // Cache frame yang sedang tampil, agar render() hanya
+    // mengirim baris yang berubah ke MAX7219.
+    uint8_t _frame[BOARD_HEIGHT];
+    bool _frameValid;    // false = isi hardware tidak diketahui
 };
 
 #endif // MATRIX_DISPLAY_H
