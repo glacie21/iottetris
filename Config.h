@@ -99,13 +99,19 @@
 //    Satu kaki → pin Dx
 //    Kaki lain → GND
 //    (Tidak perlu resistor eksternal, pull-up internal aktif)
+//
+//  PENGECUALIAN D0 (GPIO16):
+//    GPIO16 TIDAK punya pull-up internal. Tombol START WAJIB
+//    diberi resistor pull-up eksternal 10kΩ dari D0 ke 3V3.
+//    Tanpa resistor ini pin mengambang dan bisa memicu
+//    restart game secara acak.
 // └─────────────────────────────────────────────────────────┘
 
 #define PIN_BTN_LEFT    D1   // GPIO5  – Gerak kiri
 #define PIN_BTN_RIGHT   D2   // GPIO4  – Gerak kanan
 #define PIN_BTN_ROTATE  D3   // GPIO0  – Rotasi piece  [boot-sensitive!]
 #define PIN_BTN_DOWN    D4   // GPIO2  – Soft drop     [boot-sensitive!]
-#define PIN_BTN_START   D0   // GPIO16 – Start / Reset game
+#define PIN_BTN_START   D0   // GPIO16 – Start / Reset game [butuh pull-up eksternal!]
 
 // ============================================================
 //  BAGIAN 3 – PENGATURAN DISPLAY (MAX7219)

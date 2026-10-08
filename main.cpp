@@ -65,7 +65,7 @@ NetManager net(game);
 // ============================================
 void setup() {
   // --- Serial Monitor untuk debugging ---
-  Serial.begin(115200);
+  Serial.begin(SERIAL_BAUD);
   delay(100);
   
   Serial.println(F("\n"));
