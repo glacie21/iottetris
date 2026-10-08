@@ -57,9 +57,7 @@ void GameEngine::update(InputHandler& input) {
     // ------------------------------------------
     case STATE_IDLE:
       if (action == ACTION_START) {
-        resetGame();
-        _state = STATE_PLAYING;
-        spawnPiece();
+        startNewGame();
         Serial.println(F("[Game] Game started!"));
       }
       break;
@@ -73,12 +71,13 @@ void GameEngine::update(InputHandler& input) {
         case ACTION_LEFT:   moveLeft();     break;
         case ACTION_RIGHT:  moveRight();    break;
         case ACTION_ROTATE: rotatePiece();  break;
-        case ACTION_DOWN:   dropPiece();    break;
+        case ACTION_DOWN:
+          // Bonus poin untuk setiap sel soft drop manual
+          if (dropPiece()) addPoints(SCORE_DROP);
+          break;
         case ACTION_START:
           // Tombol START saat bermain = restart
-          resetGame();
-          _state = STATE_PLAYING;
-          spawnPiece();
+          startNewGame();
           Serial.println(F("[Game] Game restarted!"));
           break;
         default: break;
@@ -89,18 +88,19 @@ void GameEngine::update(InputHandler& input) {
         _dropInterval = MIN_DROP_MS;
       } else {
         // Hitung interval normal berdasarkan level
-        _dropInterval = INITIAL_DROP_MS - ((_level - 1) * SPEED_STEP_MS);
-        if (_dropInterval < MIN_DROP_MS) {
-          _dropInterval = MIN_DROP_MS;
-        }
+        _dropInterval = levelDropInterval();
       }
       
       // Auto-drop berdasarkan timer
       if (millis() - _lastDrop >= _dropInterval) {
         if (!dropPiece()) {
-          // Piece tidak bisa turun lagi → lock ke board
-          lockPiece();
-          
+          // Piece tidak bisa turun lagi → lock ke board.
+          // Jika sebagian piece masih di atas board → game over.
+          if (!lockPiece()) {
+            endGame();
+            break;
+          }
+
           // Cek dan hapus baris penuh
           uint8_t cleared = clearLines();
           if (cleared > 0) {
@@ -112,18 +112,8 @@ void GameEngine::update(InputHandler& input) {
           
           // Cek game over: piece baru langsung collision
           if (checkCollision(_currentPiece)) {
-            _state = STATE_GAMEOVER;
-            
-            // Update high score
-            if (_score > _highScore) {
-              _highScore = _score;
-            }
-            
-            Serial.println(F("[Game] === GAME OVER ==="));
-            Serial.print(F("[Game] Final Score: "));
-            Serial.println(_score);
-            Serial.print(F("[Game] High Score: "));
-            Serial.println(_highScore);
+            endGame();
+            break;
           }
         }
         _lastDrop = millis();
@@ -135,9 +125,7 @@ void GameEngine::update(InputHandler& input) {
     // ------------------------------------------
     case STATE_GAMEOVER:
       if (action == ACTION_START) {
-        resetGame();
-        _state = STATE_PLAYING;
-        spawnPiece();
+        startNewGame();
         Serial.println(F("[Game] New game started!"));
       }
       break;
@@ -203,6 +191,58 @@ void GameEngine::resetGame() {
   _display.clear();
   
   Serial.println(F("[Game] Board reset"));
+}
+
+// ============================================
+// START NEW GAME: Reset lalu langsung main
+// ============================================
+void GameEngine::startNewGame() {
+  resetGame();
+  _state = STATE_PLAYING;
+  spawnPiece();
+}
+
+// ============================================
+// END GAME: Masuk state game over
+// ============================================
+void GameEngine::endGame() {
+  _state = STATE_GAMEOVER;
+  _hasPiece = false;
+
+  // Update high score
+  if (_score > _highScore) {
+    _highScore = _score;
+  }
+
+  Serial.println(F("[Game] === GAME OVER ==="));
+  Serial.print(F("[Game] Final Score: "));
+  Serial.println(_score);
+  Serial.print(F("[Game] High Score: "));
+  Serial.println(_highScore);
+}
+
+// ============================================
+// ADD POINTS: Tambah score tanpa overflow
+// ============================================
+void GameEngine::addPoints(uint32_t points) {
+  if (points > UINT32_MAX - _score) {
+    _score = UINT32_MAX;
+  } else {
+    _score += points;
+  }
+}
+
+// ============================================
+// LEVEL DROP INTERVAL: Kecepatan sesuai level
+// ============================================
+// Dihitung dengan signed math agar tidak underflow
+// ketika level sangat tinggi.
+// ============================================
+uint16_t GameEngine::levelDropInterval() const {
+  int32_t interval = (int32_t)INITIAL_DROP_MS -
+                     ((int32_t)_level - 1) * SPEED_STEP_MS;
+  if (interval < MIN_DROP_MS) interval = MIN_DROP_MS;
+  return (uint16_t)interval;
 }
 
 // ============================================
@@ -299,9 +339,10 @@ bool GameEngine::dropPiece() {
 // Saat piece mendarat, sel-selnya menjadi bagian
 // permanen dari board.
 // ============================================
-void GameEngine::lockPiece() {
-  if (!_hasPiece) return;
-  
+bool GameEngine::lockPiece() {
+  if (!_hasPiece) return true;
+
+  bool insideBoard = true;
   uint8_t shape[4][4];
   _tetroMgr.getShape(_currentPiece, shape);
   
@@ -318,12 +359,16 @@ void GameEngine::lockPiece() {
           // Set bit pada posisi kolom
           // Bit 7 = kolom 0, Bit 6 = kolom 1, dst.
           _board[boardRow] |= (0x80 >> boardCol);
+        } else if (boardRow < 0) {
+          // Sel terkunci di atas board → top-out
+          insideBoard = false;
         }
       }
     }
   }
-  
+
   _hasPiece = false;
+  return insideBoard;
 }
 
 // ============================================
@@ -412,21 +457,24 @@ uint8_t GameEngine::clearLines() {
 void GameEngine::addScore(uint8_t lines) {
   // Tabel score berdasarkan jumlah baris
   switch (lines) {
-    case 1: _score += SCORE_1_LINE;  break;
-    case 2: _score += SCORE_2_LINES; break;
-    case 3: _score += SCORE_3_LINES; break;
-    case 4: _score += SCORE_4_LINES; break;
+    case 1: addPoints(SCORE_1_LINE);  break;
+    case 2: addPoints(SCORE_2_LINES); break;
+    case 3: addPoints(SCORE_3_LINES); break;
+    case 4: addPoints(SCORE_4_LINES); break;
     default: break;
   }
-  
+
   // Bonus level multiplier
-  _score += (lines * _level * 10);
-  
-  // Update total baris yang dihapus
-  _linesCleared += lines;
-  
-  // Naik level setiap LINES_PER_LEVEL baris
-  _level = (_linesCleared / LINES_PER_LEVEL) + 1;
+  addPoints((uint32_t)lines * _level * 10);
+
+  // Update total baris yang dihapus (saturasi di batas uint16)
+  if (_linesCleared <= UINT16_MAX - lines) {
+    _linesCleared += lines;
+  }
+
+  // Naik level setiap LINES_PER_LEVEL baris (maksimal 255)
+  uint16_t level = (_linesCleared / LINES_PER_LEVEL) + 1;
+  _level = level > UINT8_MAX ? UINT8_MAX : (uint8_t)level;
   
   // Log score
   Serial.print(F("[Game] Lines cleared: "));

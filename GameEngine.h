@@ -54,10 +54,10 @@ public:
 
   // === Getter untuk data game (digunakan oleh NetManager) ===
   GameState getState() const     { return _state; }
-  uint16_t  getScore() const     { return _score; }
-  uint16_t  getHighScore() const { return _highScore; }
+  uint32_t  getScore() const     { return _score; }
+  uint32_t  getHighScore() const { return _highScore; }
   uint8_t   getLevel() const     { return _level; }
-  uint8_t   getLines() const     { return _linesCleared; }
+  uint16_t  getLines() const     { return _linesCleared; }
 
 private:
   // === Referensi ke modul lain ===
@@ -66,10 +66,10 @@ private:
 
   // === State game ===
   GameState _state;
-  uint16_t  _score;
-  uint16_t  _highScore;
+  uint32_t  _score;
+  uint32_t  _highScore;
   uint8_t   _level;
-  uint8_t   _linesCleared;     // Total baris yang dihapus
+  uint16_t  _linesCleared;     // Total baris yang dihapus
 
   // === Board: array bitmask per baris ===
   // Bit 7 = kolom 0 (kiri), Bit 0 = kolom 7 (kanan)
@@ -93,6 +93,18 @@ private:
   /** Reset game ke state awal */
   void resetGame();
 
+  /** Reset board lalu langsung mulai bermain */
+  void startNewGame();
+
+  /** Pindah ke state game over dan update high score */
+  void endGame();
+
+  /** Tambah poin dengan saturasi (tidak overflow) */
+  void addPoints(uint32_t points);
+
+  /** Hitung interval drop normal berdasarkan level */
+  uint16_t levelDropInterval() const;
+
   /** Spawn piece baru di atas board */
   void spawnPiece();
 
@@ -108,8 +120,11 @@ private:
   /** Turunkan piece satu baris (gravity/manual) */
   bool dropPiece();
 
-  /** Kunci piece ke board (saat mendarat) */
-  void lockPiece();
+  /**
+   * Kunci piece ke board (saat mendarat).
+   * @return false jika ada sel piece di atas board (top-out)
+   */
+  bool lockPiece();
 
   /**
    * Cek collision untuk piece pada posisi tertentu.
