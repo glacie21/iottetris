@@ -1,4 +1,3 @@
-```cpp
 /*
  * ============================================
  * MatrixDisplay.h - MAX7219 Display Header
@@ -88,4 +87,3 @@ private:
 };
 
 #endif // MATRIX_DISPLAY_H
-```
