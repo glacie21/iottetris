@@ -52,6 +52,17 @@
 //  Berguna jika kamu menjalankan lebih dari satu unit.
 #define DEVICE_NAME      "IoT-Tetris"
 
+//  Origin yang diizinkan mengakses REST API dari browser (CORS).
+//  "*" = semua origin (dibutuhkan jika dashboard dibuka dari file
+//  lokal). Ganti dengan origin dashboard-mu, mis. "http://192.168.1.10",
+//  agar website lain tidak bisa membaca API.
+#define CORS_ALLOW_ORIGIN  "*"
+
+//  Proteksi brute force API key: setelah AUTH_MAX_FAILURES percobaan
+//  gagal, endpoint terkunci selama AUTH_LOCKOUT_MS milidetik.
+#define AUTH_MAX_FAILURES  5
+#define AUTH_LOCKOUT_MS    30000
+
 // ============================================================
 //  BAGIAN 2 – PIN KONFIGURASI (NodeMCU ESP8266)
 // ============================================================

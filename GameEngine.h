@@ -52,6 +52,12 @@ public:
   /** Render state game ke display */
   void render();
 
+  /**
+   * Minta restart game dari luar (mis. REST API).
+   * Diproses pada pemanggilan update() berikutnya.
+   */
+  void requestRestart() { _restartRequested = true; }
+
   // === Getter untuk data game (digunakan oleh NetManager) ===
   GameState getState() const     { return _state; }
   uint32_t  getScore() const     { return _score; }
@@ -78,6 +84,7 @@ private:
   // === Piece aktif ===
   Tetromino _currentPiece;
   bool _hasPiece;              // Ada piece aktif?
+  bool _restartRequested;      // Restart diminta via API?
 
   // === Timing ===
   unsigned long _lastDrop;     // Waktu drop terakhir

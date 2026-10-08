@@ -28,6 +28,7 @@ GameEngine::GameEngine(MatrixDisplay& display)
     _level(1),
     _linesCleared(0),
     _hasPiece(false),
+    _restartRequested(false),
     _lastDrop(0),
     _lastBlink(0),
     _dropInterval(INITIAL_DROP_MS) {
@@ -50,6 +51,15 @@ void GameEngine::begin() {
 void GameEngine::update(InputHandler& input) {
   // Baca aksi dari tombol
   GameAction action = input.getAction();
+  
+  // Restart yang diminta via REST API diproses di sini agar
+  // tetap berjalan di konteks loop utama.
+  if (_restartRequested) {
+    _restartRequested = false;
+    startNewGame();
+    Serial.println(F("[Game] Game restarted via API!"));
+    return;
+  }
   
   switch (_state) {
     // ------------------------------------------

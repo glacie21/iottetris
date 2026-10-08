@@ -4,10 +4,10 @@
  * ============================================
  * Mengelola koneksi WiFi ESP8266 dan
  * menyediakan REST API untuk dashboard IoT.
- * 
+ *
  * Endpoints:
  *   GET  /api/status  → Data game (JSON)
- *   POST /api/restart → Restart game
+ *   POST /api/restart → Restart game (butuh header X-API-Key)
  *   GET  /           → Redirect ke dashboard info
  * ============================================
  */
@@ -51,11 +51,32 @@ private:
   unsigned long _lastReport;         // Waktu report terakhir
   bool _wifiConnected;               // Status koneksi WiFi
 
+  // === Proteksi brute force API key ===
+  uint8_t _authFailures;             // Jumlah percobaan gagal berturut-turut
+  unsigned long _lockoutStart;       // Waktu mulai lockout
+
   // === Handler untuk HTTP endpoints ===
   void handleRoot();                 // GET /
   void handleApiStatus();            // GET /api/status
   void handleApiRestart();           // POST /api/restart
   void handleNotFound();             // 404
+  void handleOptions(const char* methods); // CORS preflight
+
+  /** Header CORS + keamanan untuk setiap response */
+  void sendCommonHeaders();
+
+  /** Kirim response error JSON */
+  void sendError(int code, const __FlashStringHelper* message);
+
+  /**
+   * Validasi header X-API-Key.
+   * Mengirim response error sendiri jika gagal.
+   * @return true jika request boleh diproses
+   */
+  bool authorize();
+
+  /** Cetak info koneksi WiFi ke Serial */
+  void printConnectionInfo() const;
 
   /** Konversi GameState ke string */
   const char* stateToString(GameState state) const;
