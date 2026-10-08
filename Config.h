@@ -6,7 +6,8 @@
  *  pengaturan sebelum meng-upload firmware ke NodeMCU ESP8266.
  *
  *  CARA PENGGUNAAN:
- *  1. Isi WIFI_SSID dan WIFI_PASSWORD dengan data jaringanmu.
+ *  1. Salin Secrets.example.h menjadi Secrets.h, lalu isi
+ *     WIFI_SSID, WIFI_PASSWORD, dan API_KEY.
  *  2. Sesuaikan PIN jika wiring kamu berbeda dari default.
  *  3. Optionally, tweak parameter game / timing / scoring.
  *  4. Upload ke board, lalu buka Serial Monitor (115200 baud).
@@ -24,14 +25,20 @@
 // ============================================================
 //  BAGIAN 1 – KONFIGURASI WiFi                    [WAJIB DIISI]
 // ============================================================
-//  Ganti string di bawah dengan SSID dan password WiFi-mu.
+//  SSID, password WiFi, dan API key disimpan di Secrets.h
+//  (tidak ikut di-commit). Salin Secrets.example.h menjadi
+//  Secrets.h lalu isi nilainya.
 //  - Gunakan jaringan 2.4 GHz (ESP8266 tidak mendukung 5 GHz).
 //  - Jika WiFi gagal konek, game tetap berjalan secara offline.
 //    Score hanya akan dilaporkan melalui Serial Monitor.
 // ============================================================
 
-#define WIFI_SSID        "YOUR_WIFI_SSID"      // Nama jaringan WiFi (case-sensitive)
-#define WIFI_PASSWORD    "YOUR_WIFI_PASSWORD"  // Password WiFi
+#if __has_include("Secrets.h")
+  #include "Secrets.h"
+#else
+  #warning "Secrets.h tidak ditemukan - memakai Secrets.example.h (WiFi tidak akan konek)"
+  #include "Secrets.example.h"
+#endif
 
 //  Port web server bawaan.
 //  Ubah jika port 80 sudah terpakai di jaringanmu.
