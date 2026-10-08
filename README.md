@@ -114,19 +114,14 @@
 IoT_Project/
 ├── platformio.ini          # Konfigurasi PlatformIO
 ├── README.md               # Dokumentasi (file ini)
-├── src/                    # Source code utama
-│   ├── main.cpp            # Entry point program
-│   ├── Config.h            # Konstanta konfigurasi
-│   ├── Tetromino.h         # Header tetromino manager
-│   ├── Tetromino.cpp       # Implementasi tetromino
-│   ├── MatrixDisplay.h     # Header display MAX7219
-│   ├── MatrixDisplay.cpp   # Implementasi display
-│   ├── InputHandler.h      # Header input handler
-│   ├── InputHandler.cpp    # Implementasi input
-│   ├── GameEngine.h        # Header game engine
-│   ├── GameEngine.cpp      # Implementasi game engine
-│   ├── NetManager.h        # Header WiFi manager
-│   └── NetManager.cpp      # Implementasi WiFi + API
+├── main.cpp                # Entry point program
+├── Config.h                # Konstanta konfigurasi
+├── Tetromino.h/.cpp        # Tetromino manager
+├── MatrixDisplay.h/.cpp    # Display MAX7219
+├── InputHandler.h/.cpp     # Input handler
+├── GameEngine.h/.cpp       # Game engine
+├── NetManager.h/.cpp       # WiFi + API
+├── platformio.ini          # Konfigurasi build PlatformIO
 ├── dashboard/              # Web dashboard IoT
 │   └── index.html          # Dashboard single-page
 └── docs/                   # Dokumentasi tambahan
@@ -144,8 +139,9 @@ IoT_Project/
 1. **Install VS Code** + Extension **PlatformIO IDE**
 2. **Clone / Download** project ini
 3. **Buka folder** project di VS Code
-4. PlatformIO akan otomatis install dependencies
-5. Edit `src/Config.h` → isi **SSID** dan **Password** WiFi
+4. Buka folder yang berisi `platformio.ini`; PlatformIO akan install board framework dan library yang dibutuhkan
+5. Edit `Config.h` → isi **SSID** dan **Password** WiFi
+6. Klik **Build** (centang) untuk mengompilasi proyek
 
 ### Opsi 2: Arduino IDE
 
@@ -158,7 +154,7 @@ IoT_Project/
    - `LedControl` by Eberhard Fahle
    - `ArduinoJson` by Benoit Blanchon (v6.x)
 5. **Pilih Board**: Tools → Board → NodeMCU 1.0 (ESP-12E Module)
-6. Salin semua file dari `src/` ke folder sketch
+6. Salin file `.cpp` dan `.h` proyek ke folder sketch
 
 ---
 
@@ -168,7 +164,7 @@ IoT_Project/
 
 1. **Hubungkan** NodeMCU ke PC via kabel USB Micro
 2. **Pastikan driver** CH340/CP2102 terinstall
-3. **Edit konfigurasi WiFi** di `src/Config.h`:
+3. **Edit konfigurasi WiFi** di `Config.h`:
    ```cpp
    #define WIFI_SSID       "NamaWiFiAnda"
    #define WIFI_PASSWORD   "PasswordWiFi"

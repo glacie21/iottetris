@@ -9,6 +9,18 @@
 
 #include "MatrixDisplay.h"
 
+namespace {
+// LedControl mengharapkan bit 0 = kolom paling kiri,
+// sedangkan board game menyimpan bit 7 = kolom paling kiri.
+// Balik urutan bit agar tampilan tidak terbalik.
+uint8_t reverseBits8(uint8_t value) {
+  value = ((value & 0xF0) >> 4) | ((value & 0x0F) << 4);
+  value = ((value & 0xCC) >> 2) | ((value & 0x33) << 2);
+  value = ((value & 0xAA) >> 1) | ((value & 0x55) << 1);
+  return value;
+}
+}
+
 // ============================================
 // CONSTRUCTOR
 // LedControl(DIN, CLK, CS, numDevices)
@@ -63,8 +75,10 @@ void MatrixDisplay::setRow(uint8_t row, uint8_t value) {
   if (row >= BOARD_HEIGHT) return;
   
   // LedControl::setRow(device, row, value)
-  // value: bit 7 = kolom 0 (kiri), bit 0 = kolom 7 (kanan)
-  _lc.setRow(0, row, value);
+  // library memetakan bit 0 ke kolom paling kiri.
+  // Karena board game memakai bit 7 sebagai kolom kiri,
+  // kita balik urutan bit sebelum dikirim ke hardware.
+  _lc.setRow(0, row, reverseBits8(value));
 }
 
 // ============================================
@@ -72,10 +86,11 @@ void MatrixDisplay::setRow(uint8_t row, uint8_t value) {
 // ============================================
 void MatrixDisplay::render(const uint8_t* board) {
   for (uint8_t row = 0; row < BOARD_HEIGHT; row++) {
-    // Setiap elemen board[] adalah bitmask satu baris
-    // Bit 7 = kolom 0 (paling kiri)
-    // Bit 0 = kolom 7 (paling kanan)
-    _lc.setRow(0, row, board[row]);
+    // Setiap elemen board[] adalah bitmask satu baris.
+    // Karena board game memakai bit 7 = kolom paling kiri,
+    // sementara hardware MAX7219 memakai bit 0 = kolom paling kiri,
+    // maka perlu di-mirror dulu sebelum dikirim ke display.
+    setRow(row, board[row]);
   }
 }
 
