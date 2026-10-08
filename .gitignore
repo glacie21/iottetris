@@ -1,0 +1,12 @@
+# PlatformIO build output
+.pio/
+.vscode/
+
+# Local Python environment
+.venv/
+
+# Local credentials - never commit (copy Secrets.example.h to Secrets.h)
+Secrets.h
+
+# Stale nested clone of this repository
+iottetris/
