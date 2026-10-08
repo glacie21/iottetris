@@ -190,7 +190,7 @@ Menggunakan operasi bitwise OR agar piece terlihat di atas board.
 |--------|------|----------|
 | GET | `/` | Halaman info HTML |
 | GET | `/api/status` | JSON status game |
-| POST | `/api/restart` | Restart game |
+| POST | `/api/restart` | Restart game (header `X-API-Key` wajib) |
 
 ### CORS Support
 Semua endpoint mendukung Cross-Origin Resource Sharing (CORS) agar dashboard HTML yang dibuka di browser bisa mengakses API.

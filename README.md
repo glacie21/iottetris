@@ -112,16 +112,16 @@
 
 ```
 IoT_Project/
-├── platformio.ini          # Konfigurasi PlatformIO
+├── platformio.ini          # Konfigurasi build PlatformIO
 ├── README.md               # Dokumentasi (file ini)
 ├── main.cpp                # Entry point program
 ├── Config.h                # Konstanta konfigurasi
+├── Secrets.example.h       # Template kredensial (salin ke Secrets.h)
 ├── Tetromino.h/.cpp        # Tetromino manager
 ├── MatrixDisplay.h/.cpp    # Display MAX7219
 ├── InputHandler.h/.cpp     # Input handler
 ├── GameEngine.h/.cpp       # Game engine
 ├── NetManager.h/.cpp       # WiFi + API
-├── platformio.ini          # Konfigurasi build PlatformIO
 ├── dashboard/              # Web dashboard IoT
 │   └── index.html          # Dashboard single-page
 └── docs/                   # Dokumentasi tambahan
@@ -140,7 +140,7 @@ IoT_Project/
 2. **Clone / Download** project ini
 3. **Buka folder** project di VS Code
 4. Buka folder yang berisi `platformio.ini`; PlatformIO akan install board framework dan library yang dibutuhkan
-5. Edit `Config.h` → isi **SSID** dan **Password** WiFi
+5. Salin `Secrets.example.h` menjadi `Secrets.h` → isi **SSID**, **Password** WiFi, dan **API_KEY**
 6. Klik **Build** (centang) untuk mengompilasi proyek
 
 ### Opsi 2: Arduino IDE
@@ -164,11 +164,13 @@ IoT_Project/
 
 1. **Hubungkan** NodeMCU ke PC via kabel USB Micro
 2. **Pastikan driver** CH340/CP2102 terinstall
-3. **Edit konfigurasi WiFi** di `Config.h`:
+3. **Salin `Secrets.example.h` menjadi `Secrets.h`** lalu isi:
    ```cpp
    #define WIFI_SSID       "NamaWiFiAnda"
    #define WIFI_PASSWORD   "PasswordWiFi"
+   #define API_KEY         "ganti-dengan-string-acak-panjang"
    ```
+   `Secrets.h` sudah ada di `.gitignore`, jadi password tidak ikut ter-push ke GitHub.
 4. **Upload**:
    - PlatformIO: Klik tombol → (Upload) di status bar
    - Arduino IDE: Sketch → Upload (Ctrl+U)
@@ -276,7 +278,12 @@ Mendapatkan status game saat ini.
 
 ### `POST /api/restart`
 
-Mengirim perintah restart game.
+Mengirim perintah restart game. Endpoint ini **wajib** menyertakan header
+`X-API-Key` yang sama dengan `API_KEY` di `Secrets.h`.
+
+- Jika `API_KEY` kosong, endpoint dinonaktifkan (`403`).
+- API key salah → `401 Unauthorized`.
+- Setelah 5 kali salah berturut-turut, endpoint terkunci 30 detik (`429`).
 
 **Response:**
 ```json
@@ -292,8 +299,8 @@ Mengirim perintah restart game.
 # Ambil status game
 curl http://192.168.1.100/api/status
 
-# Restart game
-curl -X POST http://192.168.1.100/api/restart
+# Restart game (butuh API key)
+curl -X POST -H "X-API-Key: API_KEY_ANDA" http://192.168.1.100/api/restart
 ```
 
 ---
@@ -370,7 +377,8 @@ ESP8266 hanya memiliki ~80KB RAM. Berikut optimasi yang diterapkan:
 | LED tidak menyala | Cek wiring DIN/CLK/CS, cek power supply |
 | Tampilan terbalik | Sesuaikan orientasi di `MatrixDisplay.cpp` |
 | Tombol tidak responsif | Cek kabel, cek pull-up resistor untuk D0 |
-| WiFi gagal connect | Cek SSID/password di Config.h, jarak ke router |
+| WiFi gagal connect | Cek SSID/password di Secrets.h, jarak ke router |
+| Restart via API ditolak | Isi `API_KEY` di Secrets.h dan kirim header `X-API-Key` |
 | Board restart terus | Jangan tekan D3/D4 saat boot, cek power supply |
 | Dashboard tidak konek | Pastikan PC dan ESP8266 di jaringan WiFi yang sama |
 | Upload gagal | Install driver CH340, coba tekan FLASH saat upload |
